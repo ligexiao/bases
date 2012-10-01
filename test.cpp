@@ -9,5 +9,6 @@ int main()
 	int j=i+10;
 	cout<<"the number is:"<<j<<endl;
 	cout<<str<<endl;
+	cout<<"test"<<endl;
 	return 0;
 }
