@@ -5,6 +5,8 @@
 #include<fstream>
 #include<string>
 #include<ctime>
+#include <thread>
+#include <mutex>
 using namespace std;
 const string logPath = "/home/centos6/program/cpp/temp/" ;
 string changeToReadableTime(struct tm* ptrlocaltm)
@@ -90,6 +92,8 @@ int writeLog(string message)
         logFileName =logFileName+ "my.log."+dateSuffix;
 
 	//write log
+	mutex writeMutex;
+	writeMutex.lock();
         ofstream outfile;
         outfile.open(logFileName.c_str(),ofstream::out|ofstream::app);
         if(!outfile)
@@ -101,10 +105,13 @@ int writeLog(string message)
         
 	outfile.close();
         outfile.clear();
+	writeMutex.unlock();
         return 0;
 }
 void mylog(const char* tag, const char* message)
 {
 	string logMessage = getLogMessage(tag,message);
-	writeLog(logMessage);
+	//writeLog(logMessage);
+	thread writeThread(writeLog,logMessage);
+	writeThread.join();
 }

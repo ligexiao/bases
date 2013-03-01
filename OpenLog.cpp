@@ -1,9 +1,11 @@
-#include"myLog.h"
+#include"OpenLog.h"
 #include<sstream>
 #include<iostream>
 #include<fstream>
 #include<string>
 #include<ctime>
+#include <thread>
+#include <mutex>
 using namespace std;
 const string logPath = "/home/centos6/program/cpp/temp/" ;
 OpenLog::OpenLog()
@@ -25,7 +27,7 @@ string OpenLog::changeToReadableTime(struct tm* ptrlocaltm)
 	strm <<ptrlocaltm->tm_year+1900<<"-";
         if(ptrlocaltm->tm_mon < 10)
         {
-                strm<<"0"<<ptrlocaltm->tm_mon+1;
+                strm<<"0"<<ptrlocaltm->tm_mon+1<<"-";
         }
         else
                 strm<<ptrlocaltm->tm_mon+1<<"-";
@@ -89,15 +91,20 @@ string OpenLog::getLogContent()
         myContent +=".";
 	return myContent;
 }
-int OpenLog::writeLog(string message)
+int OpenLog::writeLog(void* ptr)
 {
+	OpenLog* ptrOpenLog = (OpenLog*) ptr;
         //location file
-        struct tm localtm = getCurrentTime();
-        string dateSuffix = createLogDateSuffix(&localtm);
+        struct tm localtm = ptrOpenLog->getCurrentTime();
+        string dateSuffix = ptrOpenLog->createLogDateSuffix(&localtm);
         string logFileName(logPath);
         logFileName =logFileName+ "my.log."+dateSuffix;
 
+        string logMessage = ptrOpenLog->getLogContent();
+
 	//write log
+	mutex writeMutex;
+	writeMutex.lock();  //add lock
         ofstream outfile;
         outfile.open(logFileName.c_str(),ofstream::out|ofstream::app);
         if(!outfile)
@@ -105,10 +112,11 @@ int OpenLog::writeLog(string message)
                 cerr<<"error: unable to open output file:"<<endl;
                 return -1;
         }
-        outfile<<message<<endl;
+        outfile<<logMessage<<endl;
         
 	outfile.close();
         outfile.clear();
+	writeMutex.unlock();  //release lock
         return 0;
 }
 void OpenLog::mylog(string tag, string message)
@@ -116,7 +124,7 @@ void OpenLog::mylog(string tag, string message)
 	setTag(tag);
 	setMessage(message);
 
-        string logMessage = getLogContent();
-        writeLog(logMessage);
+	thread writeThread(writeLog,this);
+	writeThread.join();
 }
 

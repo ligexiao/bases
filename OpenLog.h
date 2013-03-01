@@ -1,5 +1,5 @@
-#ifndef MYLOG_H
-#define MYLOG_H
+#ifndef OPENLOG_H
+#define OPENLOG_H
 #include<string>
 using namespace std;
 class OpenLog
@@ -11,7 +11,7 @@ public:
 	string getMessage()const {return m_message;}
 	void setMessage(string message){m_message = message;}
 
-	int    writeLog(string message);
+	static int    writeLog(void* ptr);
 	string getLogContent();
 	struct tm getCurrentTime()const;
 	string changeToReadableTime(struct tm* ptrlocaltm);
